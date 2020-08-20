@@ -6,6 +6,10 @@ jobs:
   install_tools:
     runs-on: ubuntu-18.04
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
       - name: asdf_install
         uses: asdf-vm/actions/install@v1
       - uses: hashicorp/setup-terraform@v1
