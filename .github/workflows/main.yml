@@ -1,0 +1,13 @@
+name: Main workflow
+on:
+  - push
+
+jobs:
+  install_tools:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: asdf_install
+        uses: asdf-vm/actions/install@v1
+      - uses: hashicorp/setup-terraform@v1
+      - run: |
+          which terraform
