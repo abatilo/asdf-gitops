@@ -80,7 +80,7 @@ jobs:
       - name: asdf setup
         uses: asdf-vm/actions/setup@v1
       - name: asdf install
-        working-directory: terraform/${{ matrix.dir }}
+        working-directory: "terraform/${{ matrix.dir }}"
         run: |
           asdf plugin-add terraform
           asdf install
