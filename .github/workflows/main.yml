@@ -18,7 +18,7 @@ jobs:
       - name: asdf install
         working-directory: "terraform"
         run: |
-          asdf plugin-add terraform
+          asdf plugin-add terraform https://github.com/Banno/asdf-hashicorp.git
           asdf install
 
       - name: Terraform fmt
