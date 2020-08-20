@@ -6,28 +6,37 @@ on:
   pull_request:
 
 jobs:
-  install_tools:
+  terraform:
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           ref: master
-      - name: asdf_install
-        uses: asdf-vm/actions/install@v1
+      - name: asdf setup
+        uses: asdf-vm/actions/setup@v1
+      - name: asdf install
+        working-directory: "terraform"
+        run: |
+          asdf plugin-add terraform
+          asdf install
 
       - name: Terraform fmt
         id: fmt
+        working-directory: "terraform"
         run: terraform fmt
         continue-on-error: true
       - name: Terraform Init
         id: init
+        working-directory: "terraform"
         run: terraform init
       - name: Terraform Validate
         id: validate
+        working-directory: "terraform"
         run: terraform validate -no-color
       - name: Terraform Plan
         id: plan
+        working-directory: "terraform"
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
