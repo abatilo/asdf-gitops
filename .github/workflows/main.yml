@@ -18,7 +18,7 @@ jobs:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
           terraform init
-          RAW_PLAN="$(terraform plan)"
+          RAW_PLAN="$(terraform plan -no-color)"
           RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
           RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
           RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
