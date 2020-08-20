@@ -6,6 +6,57 @@ on:
   pull_request:
 
 jobs:
+  helmfile:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: asdf setup
+        uses: asdf-vm/actions/setup@v1
+      - name: asdf install
+        working-directory: "./helmfile"
+        run: |
+          asdf plugin-add helm
+          asdf plugin-add helmfile
+          asdf install
+          helm plugin install https://github.com/databus23/helm-diff --version v3.1.2
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.0.0
+      - name: helmfile diff
+        id: diff
+        working-directory: "./helmfile"
+        # Follows tips from:
+        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
+        run: |
+          RAW_PLAN="$(helmfile --no-color diff)"
+          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
+          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
+          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
+          echo "::set-output name=stdout::${RAW_PLAN}"
+        continue-on-error: true
+      - uses: actions/github-script@0.9.0
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "helmfile\n${{ steps.diff.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Helmfile Diff: \`${{ steps.diff.outcome }}\`
+
+            <details><summary>Show Diff</summary>
+
+            \`\`\`${process.env.PLAN}\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
   terraform:
     runs-on: ubuntu-18.04
     steps:
@@ -16,8 +67,6 @@ jobs:
       - name: asdf install
         working-directory: "./terraform"
         run: |
-          pwd
-          ls -lah
           asdf plugin-add terraform
           asdf install
 
@@ -53,10 +102,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            const output = `#### Terraform Format and Style: \`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization: \`${{ steps.init.outcome }}\`
+            #### Terraform Validation: \`${{ steps.validate.outcome }}\`
+            #### Terraform Plan: \`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
@@ -64,7 +113,7 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
             github.issues.createComment({
               issue_number: context.issue.number,
