@@ -102,7 +102,7 @@ jobs:
           # cache in place so that nothing actually changes.
           path: |
             helmfile
-          key: ${{ env.cache-name }}-${{ hashFiles('terraform/${{ matrix.dir }}/*') }}
+          key: ${{ env.cache-name }}-${{ matrix.dir }}-${{ hashFiles('terraform/${{ matrix.dir }}/*') }}
       - name: asdf setup
         if: steps.cache-terraform.outputs.cache-hit != 'true'
         uses: asdf-vm/actions/setup@v1
