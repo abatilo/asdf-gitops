@@ -12,7 +12,11 @@ jobs:
           ref: master
       - name: asdf_install
         uses: asdf-vm/actions/install@v1
-      - uses: hashicorp/setup-terraform@v1
-      - run: |
-          which terraform
-          terraform --version
+      - id: terraform-plan
+        run: |
+          terraform init
+          echo "::set-output name=plan::$(terraform plan)"
+      - env:
+          PLAN: ${{ steps.terraform-plan.outputs.plan }}
+        run: |
+          echo ${PLAN}
