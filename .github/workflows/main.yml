@@ -1,7 +1,9 @@
 name: Main workflow
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   install_tools:
@@ -34,12 +36,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            const output = `#### Terraform Plan 📖\`${{ steps.terraform-plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
-
+            <details>
+            <summary>Show Plan</summary>
             \`\`\`${process.env.PLAN}\`\`\`
-
             </details>
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
