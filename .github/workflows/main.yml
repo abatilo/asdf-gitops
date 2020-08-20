@@ -13,9 +13,15 @@ jobs:
       - name: asdf_install
         uses: asdf-vm/actions/install@v1
       - id: terraform-plan
+        # Follows tips from:
+        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
           terraform init
-          echo "::set-output name=plan::$(terraform plan)"
+          RAW_PLAN="$(terraform plan)"
+          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
+          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
+          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
+          echo "::set-output name=plan::${RAW_PLAN}"
       - env:
           PLAN: ${{ steps.terraform-plan.outputs.plan }}
         run: |
