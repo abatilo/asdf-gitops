@@ -15,31 +15,41 @@ jobs:
           ref: master
       - name: asdf_install
         uses: asdf-vm/actions/install@v1
-      - id: terraform-plan
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt
+        continue-on-error: true
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      - name: Terraform Plan
+        id: plan
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
-          terraform init
           RAW_PLAN="$(terraform plan -no-color)"
           RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
           RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
           RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
-          echo "::set-output name=plan::${RAW_PLAN}"
-      - env:
-          PLAN: ${{ steps.terraform-plan.outputs.plan }}
-        run: |
-          echo "${PLAN}"
+          echo "::set-output name=stdout::${RAW_PLAN}"
+        continue-on-error: true
       - uses: actions/github-script@0.9.0
         if: github.event_name == 'pull_request'
         env:
-          PLAN: ${{ steps.terraform-plan.outputs.plan }}
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Plan 📖\`${{ steps.terraform-plan.outcome }}\`
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖${{ steps.validate.outputs.stdout }}
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details>
-            <summary>Show Plan</summary>
+            <details><summary>Show Plan</summary>
 
             \`\`\`${process.env.PLAN}\`\`\`
 
