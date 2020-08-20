@@ -15,7 +15,7 @@ jobs:
       - id: build-matrix
         # Find all leaf level directories and reduce into JSON object
         run: |
-          matrix="$(find terraform -mindepth 2 -type d  | jq -R '[.]' | jq -sc 'add | {dir: .}')"
+          matrix="$(find terraform -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dirs: .}')"
           echo "::set-output name=matrix::${matrix}"
   helmfile:
     runs-on: ubuntu-18.04
@@ -80,27 +80,27 @@ jobs:
       - name: asdf setup
         uses: asdf-vm/actions/setup@v1
       - name: asdf install
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.dir }}
         run: |
           asdf plugin-add terraform
           asdf install
 
       - name: Terraform fmt
         id: fmt
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.dir }}
         run: terraform fmt
         continue-on-error: true
       - name: Terraform Init
         id: init
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.dir }}
         run: terraform init
       - name: Terraform Validate
         id: validate
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.dir }}
         run: terraform validate -no-color
       - name: Terraform Plan
         id: plan
-        working-directory: ${{ matrix.dir }}
+        working-directory: terraform/${{ matrix.dir }}
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
