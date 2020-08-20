@@ -19,4 +19,4 @@ jobs:
       - env:
           PLAN: ${{ steps.terraform-plan.outputs.plan }}
         run: |
-          echo ${PLAN}
+          echo "${PLAN}"
