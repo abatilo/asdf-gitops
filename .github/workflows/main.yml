@@ -99,27 +99,19 @@ jobs:
         run: |
           asdf plugin-add terraform
           asdf install
-
-      - name: Terraform fmt
-        id: fmt
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform fmt
-        continue-on-error: true
-      - name: Terraform Init
-        id: init
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform init
-      - name: Terraform Validate
-        id: validate
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform validate -no-color
+          
       - name: Terraform Plan
         id: plan
         working-directory: terraform/${{ matrix.dir }}
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
-          RAW_PLAN="$(terraform plan -no-color)"
+          terraform fmt
+          terraform init
+          terraform validate -no-color
+          
+          RAW_PLAN="$(terraform plan -no-color -detailed-exitcode)"
+          echo $?
           RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
           RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
           RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
@@ -143,7 +135,6 @@ jobs:
             \`\`\`
             ${process.env.PLAN}
             \`\`\`
-
 
             </details>
 
