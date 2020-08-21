@@ -35,6 +35,7 @@ jobs:
           asdf install
           
       - name: terraform init
+        working-directory: terraform/${{ matrix.dir }}
         run: terraform init
       - name: Terraform Plan
         uses: abatilo/terraform-composite-action@master
