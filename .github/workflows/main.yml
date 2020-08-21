@@ -62,6 +62,7 @@ jobs:
           set +e
           plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
           plan_exitcode="$?"
+          echo ${plan_exitcode}
           plan_outcome=$([ "${plan_exitcode}" == 0 ] && echo "success" || echo "failure")
           set -e
           plan_stdout="${plan_stdout//'%'/'%25'}"
