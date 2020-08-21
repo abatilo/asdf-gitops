@@ -38,6 +38,6 @@ jobs:
         working-directory: terraform/${{ matrix.dir }}
         run: terraform init
       - name: Terraform Plan.
-        uses: abatilo/terraform-composite-action@v4
+        uses: abatilo/terraform-composite-action@v5
         id: plan
     
