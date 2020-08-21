@@ -62,18 +62,17 @@ jobs:
           set +e
           plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
           plan_exitcode="$?"
-          echo ${plan_exitcode}
-          plan_outcome=$([ "${plan_exitcode}" == 0 ] && echo "success" || echo "failure")
+          plan_outcome=$([ "${plan_exitcode}" != 1 ] && echo "success" || echo "failure")
           set -e
           plan_stdout="${plan_stdout//'%'/'%25'}"
           plan_stdout="${plan_stdout//$'\n'/'%0A'}"
           plan_stdout="${plan_stdout//$'\r'/'%0D'}"
           
           echo "::set-output name=plan-stdout::${plan_stdout}"
-          echo "::set-output name=plan-exitcode::${plan_exitcode}"
           echo "::set-output name=plan-outcome::${plan_outcome}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
+        # Exit code 1 or 2 means we should print something which is also considered a failure.
         if: github.event_name == 'pull_request' && ${{ failure() }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,8 +88,8 @@ jobs:
 
             </details>
 
-            #### terraform plan: \`${{ steps.plan.outputs.plan-exitcode }}\`
-            Exitcode: ${{ steps.plans.outputs.plan-exitcode }}
+            #### terraform plan: \`${{ steps.plan.outputs.plan-outcome }}\`
+            Exitcode: \`${{ steps.plans.outputs.plan-exitcode }}\`
             
             <details><summary>Show plan</summary>
 
