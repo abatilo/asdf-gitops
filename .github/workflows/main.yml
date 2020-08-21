@@ -61,17 +61,19 @@ jobs:
           # Disables the immediate action failure due to exit code 2 on changes detected
           set +e
           plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
-          plan_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
+          plan_exitcode="$?"
+          plan_outcome=$([ "${plan_exitcode}" == 0 ] && echo "success" || echo "failure")
           set -e
           plan_stdout="${plan_stdout//'%'/'%25'}"
           plan_stdout="${plan_stdout//$'\n'/'%0A'}"
           plan_stdout="${plan_stdout//$'\r'/'%0D'}"
           
           echo "::set-output name=plan-stdout::${plan_stdout}"
+          echo "::set-output name=plan-exitcode::${plan_exitcode}"
           echo "::set-output name=plan-outcome::${plan_outcome}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.plans.outputs.plan-exitcode != 0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
