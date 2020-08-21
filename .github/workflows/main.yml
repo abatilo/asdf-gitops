@@ -40,9 +40,6 @@ jobs:
       - name: Terraform Plan.
         uses: abatilo/terraform-composite-action@v3
         id: plan
-      - name: dump
-        run: |
-          echo "${{ toJson(steps.plan.outputs) }}"
       - name: Terraform Plan.
         uses: actions/github-script@0.9.0
         if: ${{ github.event_name == 'pull_request' && steps.plan.outputs.has_output }}
