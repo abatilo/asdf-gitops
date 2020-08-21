@@ -41,28 +41,31 @@ jobs:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
           fmt_stdout="$(terraform fmt)"
+          fmt_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           fmt_stdout="${fmt_stdout//'%'/'%25'}"
           fmt_stdout="${fmt_stdout//$'\n'/'%0A'}"
           fmt_stdout="${fmt_stdout//$'\r'/'%0D'}"
-          fmt_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           
           echo "::set-output name=fmt-stdout::${fmt_stdout}"
           echo "::set-output name=fmt-outcome::${fmt_outcome}"
           
           init_stdout="$(terraform init)"
+          init_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           init_stdout="${init_stdout//'%'/'%25'}"
           init_stdout="${init_stdout//$'\n'/'%0A'}"
           init_stdout="${init_stdout//$'\r'/'%0D'}"
-          init_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           
           echo "::set-output name=init-stdout::${init_stdout}"
           echo "::set-output name=init-outcome::${init_outcome}"
           
           plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
+          plan_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           plan_stdout="${plan_stdout//'%'/'%25'}"
           plan_stdout="${plan_stdout//$'\n'/'%0A'}"
           plan_stdout="${plan_stdout//$'\r'/'%0D'}"
+          
           echo "::set-output name=plan-stdout::${plan_stdout}"
+          echo "::set-output name=plan-outcome::${plan_outcome}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
         if: github.event_name == 'pull_request'
@@ -70,21 +73,20 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### \`${{ matrix.dir }}\`
-            #### terraform fmt: \`${{ steps.plan.outputs.fmt_outcome }}\`
+            #### terraform fmt: \`${{ steps.plan.outputs.fmt-outcome }}\`
             <details><summary>Show fmt</summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.fmt_stdout }}
+            ${{ steps.plan.outputs.fmt-stdout }}
             \`\`\`
 
             </details>
-            
-            \`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+            #### terraform plan: \`${{ steps.plan.outputs.plan-outcome }}\`
+            <details><summary>Show plan</summary>
 
             \`\`\`
-            ${process.env.PLAN}
+            ${{ steps.plan.outputs.plan-stdout}
             \`\`\`
 
             </details>
