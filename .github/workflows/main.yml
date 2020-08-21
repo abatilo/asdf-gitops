@@ -17,72 +17,6 @@ jobs:
         run: |
           matrix="$(find terraform -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dir: .}')"
           echo "::set-output name=matrix::${matrix}"
-  helmfile:
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      # Cache hit means there are no changes to vet
-      - name: Cache helmfile
-        id: cache-helmfile
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-helmfile
-        with:
-          # cache in place so that nothing actually changes.
-          path: |
-            helmfile
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('helmfile/*') }}
-      - name: asdf setup
-        if: steps.cache-helmfile.outputs.cache-hit != 'true'
-        uses: asdf-vm/actions/setup@v1
-      - name: asdf install
-        if: steps.cache-helmfile.outputs.cache-hit != 'true'
-        working-directory: "./helmfile"
-        run: |
-          asdf plugin-add helm
-          asdf plugin-add helmfile
-          asdf install
-          helm plugin install https://github.com/databus23/helm-diff --version v3.1.2
-      - name: Create kind cluster
-        if: steps.cache-helmfile.outputs.cache-hit != 'true'
-        uses: helm/kind-action@v1.0.0
-      - name: helmfile diff
-        if: steps.cache-helmfile.outputs.cache-hit != 'true'
-        id: diff
-        working-directory: "./helmfile"
-        # Follows tips from:
-        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
-        run: |
-          RAW_PLAN="$(helmfile --no-color diff)"
-          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
-          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
-          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
-          echo "::set-output name=stdout::${RAW_PLAN}"
-        continue-on-error: true
-      - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "helmfile\n${{ steps.diff.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Helmfile Diff: \`${{ steps.diff.outcome }}\`
-
-            <details><summary>Show Diff</summary>
-
-            \`\`\`${process.env.PLAN}\`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
   terraform:
     needs:
       - terraform-matrix
@@ -106,35 +40,38 @@ jobs:
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
-          terraform fmt
-          echo "::set-output name=fmt::$?"
+          fmt-stdout="$(terraform fmt)"
+          fmt-stdout="${fmt-stdout//'%'/'%25'}"
+          fmt-stdout="${fmt-stdout//$'\n'/'%0A'}"
+          fmt-stdout="${fmt-stdout//$'\r'/'%0D'}"
+          fmt-outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           
-          terraform init
-          echo "::set-output name=fmt::$?"
+          echo "::set-output name=fmt-stdout::${fmt-stdout}
+          echo "::set-output name=fmt-outcome::${fmt-outcome}
           
-          terraform validate -no-color
-          echo "::set-output name=fmt::$?"
-          
-          RAW_PLAN="$(terraform plan -no-color -detailed-exitcode)"
-          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
-          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
-          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
-          echo "::set-output name=stdout::${RAW_PLAN}"
+          plan-stdout="$(terraform plan -no-color -detailed-exitcode)"
+          plan-stdout="${plan-stdout//'%'/'%25'}"
+          plan-stdout="${plan-stdout//$'\n'/'%0A'}"
+          plan-stdout="${plan-stdout//$'\r'/'%0D'}"
+          echo "::set-output name=plan-stdout::${plan-stdout}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
-        # `failure()` is any non zero exit code. Success with no changes is exit code zero.
-        # https://www.terraform.io/docs/commands/plan.html#detailed-exitcode
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### \`${{ matrix.dir }}\`
-            #### Terraform Format and Style: \`${{ steps.plan.outputs.fmt }}\`
-            #### Terraform Initialization: \`${{ steps.plan.outputs.init }}\`
-            #### Terraform Validation: \`${{ steps.plan.outputs.validate }}\`
+            #### terraform fmt: \`${{ steps.plan.outputs.fmt-outcome }}\`
+            <details><summary>Show fmt</summary>
+
+            \`\`\`
+            ${{ steps.plan.outputs.fmt-stdout }}
+            \`\`\`
+
+            </details>
+            
             \`${{ steps.plan.outcome }}\`
+            \`${{ failure() }}\`
 
             <details><summary>Show Plan</summary>
 
