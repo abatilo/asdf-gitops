@@ -40,4 +40,5 @@ jobs:
       - name: Terraform Plan.
         uses: abatilo/terraform-composite-action@v5
         id: plan
-    
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
