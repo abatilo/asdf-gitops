@@ -17,57 +17,6 @@ jobs:
         run: |
           matrix="$(find terraform -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dir: .}')"
           echo "::set-output name=matrix::${matrix}"
-  helmfile:
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: asdf setup
-        uses: asdf-vm/actions/setup@v1
-      - name: asdf install
-        working-directory: "./helmfile"
-        run: |
-          asdf plugin-add helm
-          asdf plugin-add helmfile
-          asdf install
-          helm plugin install https://github.com/databus23/helm-diff --version v3.1.2
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0
-      - name: helmfile diff
-        id: diff
-        working-directory: "./helmfile"
-        # Follows tips from:
-        # https://github.community/t/set-output-truncates-multiline-strings/16852/5
-        run: |
-          RAW_PLAN="$(helmfile --no-color diff)"
-          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
-          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
-          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
-          echo "::set-output name=stdout::${RAW_PLAN}"
-        continue-on-error: true
-      - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "helmfile\n${{ steps.diff.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Helmfile Diff: \`${{ steps.diff.outcome }}\`
-
-            <details><summary>Show Diff</summary>
-
-            \`\`\`${process.env.PLAN}\`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
   terraform:
     needs:
       - terraform-matrix
@@ -84,48 +33,70 @@ jobs:
         run: |
           asdf plugin-add terraform
           asdf install
-
-      - name: Terraform fmt
-        id: fmt
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform fmt
-        continue-on-error: true
-      - name: Terraform Init
-        id: init
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform init
-      - name: Terraform Validate
-        id: validate
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform validate -no-color
+          
       - name: Terraform Plan
         id: plan
         working-directory: terraform/${{ matrix.dir }}
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
-          RAW_PLAN="$(terraform plan -no-color)"
-          RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
-          RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
-          RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
-          echo "::set-output name=stdout::${RAW_PLAN}"
+          fmt_stdout="$(terraform fmt)"
+          fmt_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
+          fmt_stdout="${fmt_stdout//'%'/'%25'}"
+          fmt_stdout="${fmt_stdout//$'\n'/'%0A'}"
+          fmt_stdout="${fmt_stdout//$'\r'/'%0D'}"
+          
+          echo "::set-output name=fmt-stdout::${fmt_stdout}"
+          echo "::set-output name=fmt-outcome::${fmt_outcome}"
+          
+          init_stdout="$(terraform init)"
+          init_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
+          init_stdout="${init_stdout//'%'/'%25'}"
+          init_stdout="${init_stdout//$'\n'/'%0A'}"
+          init_stdout="${init_stdout//$'\r'/'%0D'}"
+          
+          echo "::set-output name=init-stdout::${init_stdout}"
+          echo "::set-output name=init-outcome::${init_outcome}"
+          
+          # Disables the immediate action failure due to exit code 2 on changes detected
+          set +e
+          plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
+          plan_exitcode="$?"
+          echo ${plan_exitcode}
+          plan_outcome=$([ "${plan_exitcode}" == 0 ] && echo "success" || echo "failure")
+          set -e
+          plan_stdout="${plan_stdout//'%'/'%25'}"
+          plan_stdout="${plan_stdout//$'\n'/'%0A'}"
+          plan_stdout="${plan_stdout//$'\r'/'%0D'}"
+          
+          echo "::set-output name=plan-stdout::${plan_stdout}"
+          echo "::set-output name=plan-exitcode::${plan_exitcode}"
+          echo "::set-output name=plan-outcome::${plan_outcome}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        if: github.event_name == 'pull_request' && ${{ failure() }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### \`${{ matrix.dir }}\`
-            #### Terraform Format and Style: \`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization: \`${{ steps.init.outcome }}\`
-            #### Terraform Validation: \`${{ steps.validate.outcome }}\`
-            #### Terraform Plan: \`${{ steps.plan.outcome }}\`
+            #### terraform fmt: \`${{ steps.plan.outputs.fmt-outcome }}\`
+            
+            <details><summary>Show fmt</summary>
 
-            <details><summary>Show Plan</summary>
+            \`\`\`
+            ${{ steps.plan.outputs.fmt-stdout }}
+            \`\`\`
 
-            \`\`\`${process.env.PLAN}\`\`\`
+            </details>
+
+            #### terraform plan: \`${{ steps.plan.outputs.plan-outcome }}\`
+            Exitcode: ${{ steps.plans.outputs.plan-exitcode }}
+            
+            <details><summary>Show plan</summary>
+
+            \`\`\`
+            ${{ steps.plan.outputs.plan-stdout }}
+            \`\`\`
 
             </details>
 
