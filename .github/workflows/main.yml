@@ -89,7 +89,7 @@ jobs:
 
             </details>
 
-            #### terraform plan: \`${{ steps.plan.outputs.plan-outcome }}\`
+            #### terraform plan: \`${{ steps.plan.outputs.plan-exitcode }}\`
             Exitcode: ${{ steps.plans.outputs.plan-exitcode }}
             
             <details><summary>Show plan</summary>
