@@ -79,6 +79,7 @@ jobs:
           script: |
             const output = `#### \`${{ matrix.dir }}\`
             #### terraform fmt: \`${{ steps.plan.outputs.fmt-outcome }}\`
+            
             <details><summary>Show fmt</summary>
 
             \`\`\`
@@ -89,6 +90,7 @@ jobs:
 
             #### terraform plan: \`${{ steps.plan.outputs.plan-outcome }}\`
             \`${{ steps.plans.outputs.plan-exitcode }}\`
+            
             <details><summary>Show plan</summary>
 
             \`\`\`
