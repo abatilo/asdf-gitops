@@ -107,28 +107,34 @@ jobs:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
           terraform fmt
+          echo "::set-output name=fmt::$?"
+          
           terraform init
+          echo "::set-output name=fmt::$?"
+          
           terraform validate -no-color
+          echo "::set-output name=fmt::$?"
           
           RAW_PLAN="$(terraform plan -no-color -detailed-exitcode)"
-          echo $?
+
           RAW_PLAN="${RAW_PLAN//'%'/'%25'}"
           RAW_PLAN="${RAW_PLAN//$'\n'/'%0A'}"
           RAW_PLAN="${RAW_PLAN//$'\r'/'%0D'}"
           echo "::set-output name=stdout::${RAW_PLAN}"
         continue-on-error: true
       - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
+        # `failure()` is any non zero exit code. Success with no changes is exit code zero.
+        # https://www.terraform.io/docs/commands/plan.html#detailed-exitcode
+        if: failure() && github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### \`${{ matrix.dir }}\`
-            #### Terraform Format and Style: \`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization: \`${{ steps.init.outcome }}\`
-            #### Terraform Validation: \`${{ steps.validate.outcome }}\`
-            #### Terraform Plan: \`${{ steps.plan.outcome }}\`
+            #### Terraform Format and Style: \`${{ steps.plan.outputs.fmt }}\`
+            #### Terraform Initialization: \`${{ steps.plan.outputs.init }}\`
+            #### Terraform Validation: \`${{ steps.plan.outputs.validate }}\`
 
             <details><summary>Show Plan</summary>
 
