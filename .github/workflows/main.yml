@@ -38,3 +38,34 @@ jobs:
         run: terraform init
       - name: Terraform Plan
         uses: abatilo/terraform-composite-action@master
+        id: plan
+      - name: Comment on PR
+        uses: actions/github-script@0.9.0
+        # exitcode 2 means changes were found
+        if: ${{ github.event_name == 'pull_request' && steps.plan.outputs.exitcode == 2 }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### \`${{ matrix.dir }}\`
+
+            <details><summary>Show plan</summary>
+
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            `;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      - name: Fail action if there's an error
+        if: ${{ steps.plan.outputs.exitcode == 1 }}
+        run: |
+          echo "Terraform plan returned ${{ steps.plan.outputs.exitcode }}"
+          exit ${{ steps.plan.outputs.exitcode }}
