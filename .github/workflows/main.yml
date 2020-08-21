@@ -41,6 +41,7 @@ jobs:
         uses: abatilo/terraform-composite-action@v1
         id: plan
       - name: Terraform Plan.
+        uses: actions/github-script@0.9.0
         if: ${{ github.event_name == 'pull_request' && steps.plan.outputs.has_output }}
         with:	
           github-token: ${{ secrets.GITHUB_TOKEN }}	
