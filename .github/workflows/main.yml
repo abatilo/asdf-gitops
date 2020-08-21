@@ -40,14 +40,17 @@ jobs:
         # Follows tips from:
         # https://github.community/t/set-output-truncates-multiline-strings/16852/5
         run: |
-          fmt_stdout="$(terraform fmt)"
-          fmt_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
+          set +e
+          fmt_stdout="$(terraform fmt -check)"
+          fmt_exitcode="$?"
+          fmt_outcome=$([ "${fmt_exitcode}" == 0 ] && echo "success" || echo "failure")
           fmt_stdout="${fmt_stdout//'%'/'%25'}"
           fmt_stdout="${fmt_stdout//$'\n'/'%0A'}"
           fmt_stdout="${fmt_stdout//$'\r'/'%0D'}"
 
           echo "::set-output name=fmt-stdout::${fmt_stdout}"
           echo "::set-output name=fmt-outcome::${fmt_outcome}"
+          echo "::set-output name=fmt-exitcode::${fmt_exitcode}"
 
           init_stdout="$(terraform init)"
           init_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
@@ -59,11 +62,9 @@ jobs:
           echo "::set-output name=init-outcome::${init_outcome}"
 
           # Disables the immediate action failure due to exit code 2 on changes detected
-          set +e
           plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
           plan_exitcode="$?"
           plan_outcome=$([ "${plan_exitcode}" != 1 ] && echo "success" || echo "failure")
-          set -e
           plan_stdout="${plan_stdout//'%'/'%25'}"
           plan_stdout="${plan_stdout//$'\n'/'%0A'}"
           plan_stdout="${plan_stdout//$'\r'/'%0D'}"
@@ -71,7 +72,9 @@ jobs:
           echo "::set-output name=plan-stdout::${plan_stdout}"
           echo "::set-output name=plan-outcome::${plan_outcome}"
           echo "::set-output name=plan-exitcode::${plan_exitcode}"
-          exit ${plan_exitcode}
+
+          sum_exitcode=$((fmt_exitcode + plan_exitcode))
+          exit ${sum_exitcode}
       - uses: actions/github-script@0.9.0
         # Exit code 1 or 2 means we should print something which is also considered a failure.
         if: github.event_name == 'pull_request' && failure()
@@ -107,5 +110,3 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
-
-            core.setFailed("terraform failed");
