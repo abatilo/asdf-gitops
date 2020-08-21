@@ -58,7 +58,7 @@ jobs:
           echo "::set-output name=init-stdout::${init_stdout}"
           echo "::set-output name=init-outcome::${init_outcome}"
           
-          plan_stdout="$(terraform plan -no-color -detailed-exitcode)"
+          plan_stdout="$(terraform plan -no-color)"
           plan_outcome=$([ "$?" == 0 ] && echo "success" || echo "failure")
           plan_stdout="${plan_stdout//'%'/'%25'}"
           plan_stdout="${plan_stdout//$'\n'/'%0A'}"
