@@ -71,7 +71,6 @@ jobs:
             </details>
             
             \`${{ steps.plan.outcome }}\`
-            \`${{ failure() }}\`
 
             <details><summary>Show Plan</summary>
 
