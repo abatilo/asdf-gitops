@@ -38,7 +38,7 @@ jobs:
         working-directory: terraform/${{ matrix.dir }}
         run: terraform init
       - name: Terraform Plan.
-        uses: abatilo/terraform-composite-action@v2
+        uses: abatilo/terraform-composite-action@v3
         id: plan
       - name: dump
         run: |
