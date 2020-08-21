@@ -40,3 +40,15 @@ jobs:
       - name: Terraform Plan.
         uses: abatilo/terraform-composite-action@v1
         id: plan
+      - name: Terraform Plan.
+        if: ${{ github.event_name == 'pull_request' && steps.plan.outputs.has_output }}
+        with:	
+          github-token: ${{ secrets.GITHUB_TOKEN }}	
+          script: |	
+            const output = `${{ steps.plan.outputs.output }}`;	
+            github.issues.createComment({	
+              issue_number: context.issue.number,	
+              owner: context.repo.owner,	
+              repo: context.repo.repo,	
+              body: output	
+            })
