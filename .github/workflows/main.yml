@@ -38,7 +38,7 @@ jobs:
         working-directory: terraform/${{ matrix.dir }}
         run: terraform init
       - name: Terraform Plan.
-        uses: abatilo/terraform-composite-action@v5
+        uses: abatilo/terraform-composite-action@v6
         id: plan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
