@@ -27,4 +27,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: diff
-          working-directory: helmfile/
+          working_directory: helmfile/
