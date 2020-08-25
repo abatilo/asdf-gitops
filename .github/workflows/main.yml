@@ -6,29 +6,14 @@ on:
   pull_request:
 
 jobs:
-  matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.build-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v2
-      - id: build-matrix
-        # Find all leaf level directories and reduce into JSON object
-        run: |
-          matrix="$(find helmfile -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dir: .}')"
-          echo "::set-output name=matrix::${matrix}"
   helmfile:
-    needs:
-      - matrix
     runs-on: ubuntu-18.04
-    strategy:	
-      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v2
       - name: asdf setup	
         uses: asdf-vm/actions/setup@v1	
       - name: asdf install	
-        working-directory: helmfile/${{ matrix.dir }}	
+        working-directory: helmfile/
         run: |	
           asdf plugin-add helmfile	
           asdf plugin-add helm
