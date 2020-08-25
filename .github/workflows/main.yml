@@ -15,58 +15,11 @@ jobs:
       - id: build-matrix
         # Find all leaf level directories and reduce into JSON object
         run: |
-          matrix="$(find terraform -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dir: .}')"
+          matrix="[{\"name\":\"Checkout\",\"uses\":\"actions/checkout@v2\"},{\"name\": \"Say hello\",\"run\": \"echo hello\"}]"
           echo "::set-output name=matrix::${matrix}"
   terraform:
     needs:
       - terraform-matrix
     runs-on: ubuntu-18.04
-    strategy:
-      matrix: ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: asdf setup
-        uses: asdf-vm/actions/setup@v1
-      - name: asdf install
-        working-directory: terraform/${{ matrix.dir }}
-        run: |
-          asdf plugin-add terraform
-          asdf install
-          
-      - name: terraform init
-        working-directory: terraform/${{ matrix.dir }}
-        run: terraform init
-      - name: Terraform Plan
-        uses: abatilo/terraform-composite-action@master
-        id: plan
-      - name: Comment on PR
-        uses: actions/github-script@0.9.0
-        # exitcode 2 means changes were found
-        if: ${{ github.event_name == 'pull_request' && steps.plan.outputs.exitcode == 2 }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### \`${{ matrix.dir }}\`
-
-            <details><summary>Show plan</summary>
-
-            \`\`\`
-            ${{ steps.plan.outputs.stdout }}
-            \`\`\`
-
-            </details>
-
-            `;
-
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-      - name: Fail action if there's an error
-        if: ${{ steps.plan.outputs.exitcode == 1 }}
-        run: |
-          echo "Terraform plan returned ${{ steps.plan.outputs.exitcode }}"
-          exit ${{ steps.plan.outputs.exitcode }}
+      ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
