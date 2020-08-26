@@ -21,7 +21,7 @@ jobs:
           helm plugin install https://github.com/databus23/helm-diff --version v3.1.2
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0
-      - uses: iStreamPlanet/github-actions/helmfile-actions@0bbe8ad
+      - uses: iStreamPlanet/github-actions/helmfile-actions@2c00c1de
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
