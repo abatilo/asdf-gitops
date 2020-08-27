@@ -41,7 +41,7 @@ jobs:
         with:
           command: init
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@6635c77
+      - uses: iStreamPlanet/github-actions/terraform-actions@83e36ff
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
