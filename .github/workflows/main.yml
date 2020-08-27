@@ -29,9 +29,6 @@ jobs:
           command: diff
           working_directory: helmfile/
       - uses: iStreamPlanet/github-actions/helmfile-actions@c59e793
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: apply
           working_directory: helmfile/
