@@ -34,35 +34,35 @@ jobs:
         run: |	
           asdf plugin-add terraform	
           asdf install
-      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: init
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: fmt
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: validate
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: apply
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
