@@ -1,5 +1,5 @@
 terraform {
-    backend "local" {
+  backend "local" {
     path = "local.tf"
   }
 }
