@@ -22,9 +22,10 @@ jobs:
       - terraform-matrix
     runs-on: ubuntu-18.04
     strategy:	
-      matrix: ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}	
+      matrix: ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
+      fail-fast: false
     steps:
-      - name: Checkout	      ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
+      - name: Checkout
         uses: actions/checkout@v2	
       - name: asdf setup	
         uses: asdf-vm/actions/setup@v1	
@@ -33,3 +34,38 @@ jobs:
         run: |	
           asdf plugin-add terraform	
           asdf install
+      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: init
+          working_directory: terraform/${{ matrix.dir }}
+      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: fmt
+          working_directory: terraform/${{ matrix.dir }}
+      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: validate
+          working_directory: terraform/${{ matrix.dir }}
+      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: apply
+          working_directory: terraform/${{ matrix.dir }}
+      - uses: iStreamPlanet/github-actions/terraform-actions@terraform-actions
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: plan
+          working_directory: terraform/${{ matrix.dir }}
