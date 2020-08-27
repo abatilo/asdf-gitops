@@ -55,7 +55,7 @@ jobs:
         with:
           command: validate
           working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
+      - uses: iStreamPlanet/github-actions/terraform-actions@88b7c57
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,11 +68,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: apply
-          working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: plan
           working_directory: terraform/${{ matrix.dir }}
