@@ -15,11 +15,21 @@ jobs:
       - id: build-matrix
         # Find all leaf level directories and reduce into JSON object
         run: |
-          matrix="[{\"name\":\"Checkout\",\"uses\":\"actions/checkout@v2\"},{\"name\": \"Say hello\",\"run\": \"echo hello\"}]"
+          matrix="$(find terraform -mindepth 2 -type d  | cut -c 11- | jq -R '[.]' | jq -sc 'add | {dir: .}')"
           echo "::set-output name=matrix::${matrix}"
   terraform:
     needs:
       - terraform-matrix
     runs-on: ubuntu-18.04
+    strategy:	
+      matrix: ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}	
     steps:
-      ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
+      - name: Checkout	      ${{ fromJson(needs.terraform-matrix.outputs.matrix) }}
+        uses: actions/checkout@v2	
+      - name: asdf setup	
+        uses: asdf-vm/actions/setup@v1	
+      - name: asdf install	
+        working-directory: terraform/${{ matrix.dir }}	
+        run: |	
+          asdf plugin-add terraform	
+          asdf install
