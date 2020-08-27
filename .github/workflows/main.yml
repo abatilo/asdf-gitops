@@ -34,38 +34,6 @@ jobs:
         run: |	
           asdf plugin-add terraform	
           asdf install
-      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: init
-          working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@83e36ff
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: fmt
-          working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@260183e
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: validate
-          working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@3e43d34
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: plan
-          working_directory: terraform/${{ matrix.dir }}
-      - uses: iStreamPlanet/github-actions/terraform-actions@b2e824b
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: apply
-          working_directory: terraform/${{ matrix.dir }}
+      - run: |
+          CLUSTER_NAME=$(basename "${{ matrix.dir }}")
+          echo ${CLUSTER_NAME}
