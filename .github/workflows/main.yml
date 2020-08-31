@@ -15,6 +15,7 @@ jobs:
       - name: asdf install	
         working-directory: helmfile/
         run: |	
+          mkdir -p $HOME/.helm/plugins
           asdf plugin-add helmfile	
           asdf plugin-add helm
           asdf install
