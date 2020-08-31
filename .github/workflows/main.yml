@@ -21,21 +21,15 @@ jobs:
           helm plugin install https://github.com/databus23/helm-diff --version v3.1.2
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0
-      - uses: iStreamPlanet/github-actions/helmfile-actions@v1.2.0
+      - name: "helmfile diff no PR output"
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: diff
-          working_directory: helmfile/
-      - uses: iStreamPlanet/github-actions/helmfile-actions@v1.2.0
-        with:
-          command: apply
-          working_directory: helmfile/
-      - uses: iStreamPlanet/github-actions/helmfile-actions@v1.2.0
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          command: diff
-          working_directory: helmfile/
+        working-directory: helmfile/
+        run: |
+          asdf current
+          helm version
+          pwd
+          ls -la
+          which helmfile
+          helmfile list
