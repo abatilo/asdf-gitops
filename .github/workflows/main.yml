@@ -30,6 +30,6 @@ jobs:
         uses: asdf-vm/actions/setup@v1	
       - name: asdf install	
         working-directory: terraform/${{ matrix.dir }}	
-        run: |	
+        run: |
           asdf plugin-add terraform	
           asdf install
